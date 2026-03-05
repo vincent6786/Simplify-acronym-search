@@ -30,17 +30,6 @@
             --safe-bottom: env(safe-area-inset-bottom);
         }
 
-        [data-theme="light"] {
-            --bg: #f0f4f8;
-            --surface: #ffffff;
-            --surface-2: #e8eef4;
-            --border: rgba(0,0,0,0.07);
-            --text: #1a2435;
-            --text-dim: #6b7b91;
-            --accent: #0284c7;
-            --accent-glow: rgba(2, 132, 199, 0.1);
-        }
-
         html { height: 100%; }
 
         body {
@@ -75,57 +64,12 @@
             padding-bottom: calc(100px + var(--safe-bottom));
         }
 
-        /* ── HEADER ── */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px 0 16px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-icon {
-            width: 36px; height: 36px;
-            background: linear-gradient(135deg, var(--accent), #818cf8);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px;
-            box-shadow: 0 4px 20px var(--accent-glow);
-        }
-
-        .logo-text {
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 700;
-            font-size: 1.15rem;
-            letter-spacing: -0.5px;
-            color: var(--text);
-        }
-        .logo-text span { color: var(--accent); }
-
-        .theme-toggle {
-            width: 40px; height: 40px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            background: var(--surface);
-            color: var(--text-dim);
-            font-size: 18px;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s;
-        }
-        .theme-toggle:active { transform: scale(0.92); }
-
         /* ── SEARCH BAR ── */
         .search-container {
             position: sticky;
             top: var(--safe-top);
             z-index: 50;
-            padding: 8px 0 12px;
+            padding: 14px 0 12px;
             background: var(--bg);
         }
         .search-container::after {
@@ -183,21 +127,6 @@
         }
         .search-clear.visible { display: block; }
 
-        .search-mode {
-            margin: 0 4px;
-            padding: 8px 12px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--text-dim);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            outline: none;
-            -webkit-appearance: none;
-        }
-
         /* ── DATABASE TABS ── */
         .db-tabs {
             display: flex;
@@ -248,36 +177,48 @@
         .db-tab[data-db="jepp"] .dot { background: var(--jepp); }
         .db-tab[data-db="notam"] .dot { background: var(--notam); }
 
-        /* ── STATUS BAR ── */
-        .status-bar {
+        /* ── FILTER ROW ── */
+        .filter-row {
             display: flex;
+            gap: 8px;
             align-items: center;
-            justify-content: space-between;
-            padding: 0 2px 12px;
+            padding: 0 0 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            flex: 1;
+            min-width: 0;
+            padding: 8px 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237a8ba7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 26px;
+        }
+        .filter-select option { background: var(--surface); color: var(--text); }
+
+        .result-count {
             font-size: 12px;
             color: var(--text-dim);
             font-weight: 500;
+            padding: 0 2px 10px;
         }
-
-        .status-bar .count {
+        .result-count .count {
             font-family: 'JetBrains Mono', monospace;
             font-weight: 700;
             color: var(--accent);
         }
-
-        .sort-btn {
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--text-dim);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 5px 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-        .sort-btn:active { transform: scale(0.96); }
 
         /* ── RESULTS ── */
         .results {
@@ -488,14 +429,6 @@
     </div>
 
     <div class="app">
-        <!-- HEADER -->
-        <header class="header">
-            <div class="logo">
-                <div class="logo-icon">✈</div>
-                <div class="logo-text">Aero<span>Search</span></div>
-            </div>
-            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">☀</button>
-        </header>
 
         <!-- SEARCH -->
         <div class="search-container">
@@ -503,11 +436,6 @@
                 <div class="search-icon">⌕</div>
                 <input class="search-input" id="searchInput" type="text" placeholder="Search acronyms or definitions…" autocomplete="off" autocorrect="off" spellcheck="false">
                 <button class="search-clear" id="clearBtn" aria-label="Clear">×</button>
-                <select class="search-mode" id="searchMode" aria-label="Search mode">
-                    <option value="starts">Starts</option>
-                    <option value="contains">Contains</option>
-                    <option value="exact">Exact</option>
-                </select>
             </div>
         </div>
 
@@ -520,11 +448,25 @@
             <button class="db-tab" data-db="notam"><span class="dot"></span>NOTAM</button>
         </div>
 
-        <!-- STATUS -->
-        <div class="status-bar">
-            <span><span class="count" id="resultCount">0</span> results</span>
-            <button class="sort-btn" id="sortBtn">A→Z ↕</button>
+        <!-- FILTERS -->
+        <div class="filter-row">
+            <select class="filter-select" id="searchMode" aria-label="Search mode">
+                <option value="starts">Starts with</option>
+                <option value="contains">Contains</option>
+                <option value="exact">Exact match</option>
+            </select>
+            <select class="filter-select" id="categoryFilter" aria-label="Category">
+                <option value="all">All Categories</option>
+            </select>
+            <select class="filter-select" id="sortSelect" aria-label="Sort">
+                <option value="default">Original</option>
+                <option value="az">A → Z</option>
+                <option value="za">Z → A</option>
+            </select>
         </div>
+
+        <!-- COUNT -->
+        <div class="result-count"><span class="count" id="resultCount">0</span> results</div>
 
         <!-- RESULTS -->
         <div class="results" id="results">
@@ -569,7 +511,6 @@
        ═══════════════════════════════════════ */
     let allData = [];
     let activeDB = 'all';
-    let sortOrder = 'default'; // default, az, za
     const MAX_DISPLAY = 60;
 
     /* ═══════════════════════════════════════
@@ -578,9 +519,10 @@
     const $input = document.getElementById('searchInput');
     const $clear = document.getElementById('clearBtn');
     const $mode = document.getElementById('searchMode');
+    const $catFilter = document.getElementById('categoryFilter');
+    const $sortSelect = document.getElementById('sortSelect');
     const $results = document.getElementById('results');
     const $count = document.getElementById('resultCount');
-    const $sortBtn = document.getElementById('sortBtn');
     const $scrollTop = document.getElementById('scrollTop');
     const $toast = document.getElementById('toast');
     const $splash = document.getElementById('splash');
@@ -643,6 +585,7 @@
                 else failed++;
             });
             allData = loaded;
+            populateCategories();
             render();
 
             // Hide splash
@@ -657,11 +600,36 @@
     }
 
     /* ═══════════════════════════════════════
+       CATEGORY POPULATION
+       ═══════════════════════════════════════ */
+    function populateCategories() {
+        let items = allData;
+        if (activeDB !== 'all') {
+            const label = SOURCES[activeDB].label;
+            items = items.filter(i => i.source === label);
+        }
+        const cats = [...new Set(items.map(i => i.category).filter(c => c && c !== 'General'))].sort();
+        const prev = $catFilter.value;
+        $catFilter.innerHTML = '<option value="all">All Categories</option>';
+        cats.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            $catFilter.appendChild(opt);
+        });
+        // Restore previous selection if still valid
+        if (cats.includes(prev)) $catFilter.value = prev;
+        else $catFilter.value = 'all';
+    }
+
+    /* ═══════════════════════════════════════
        SEARCH + RENDER
        ═══════════════════════════════════════ */
     function render() {
         const term = $input.value.trim().toLowerCase();
         const mode = $mode.value;
+        const category = $catFilter.value;
+        const sortOrder = $sortSelect.value;
 
         let items = [...allData];
 
@@ -669,6 +637,11 @@
         if (activeDB !== 'all') {
             const label = SOURCES[activeDB].label;
             items = items.filter(i => i.source === label);
+        }
+
+        // Filter by category
+        if (category !== 'all') {
+            items = items.filter(i => i.category === category);
         }
 
         // Filter by search
@@ -760,6 +733,8 @@
     });
 
     $mode.addEventListener('change', render);
+    $catFilter.addEventListener('change', render);
+    $sortSelect.addEventListener('change', render);
 
     // DB tabs
     document.getElementById('dbTabs').addEventListener('click', (e) => {
@@ -768,35 +743,9 @@
         document.querySelectorAll('.db-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         activeDB = tab.dataset.db;
+        populateCategories();
         render();
     });
-
-    // Sort
-    $sortBtn.addEventListener('click', () => {
-        if (sortOrder === 'default') { sortOrder = 'az'; $sortBtn.textContent = 'A→Z ✓'; }
-        else if (sortOrder === 'az') { sortOrder = 'za'; $sortBtn.textContent = 'Z→A ✓'; }
-        else { sortOrder = 'default'; $sortBtn.textContent = 'A→Z ↕'; }
-        render();
-    });
-
-    // Theme
-    const $themeBtn = document.getElementById('themeToggle');
-    function setTheme(t) {
-        document.documentElement.setAttribute('data-theme', t);
-        localStorage.setItem('aero-theme', t);
-        $themeBtn.textContent = t === 'dark' ? '☀' : '☾';
-    }
-
-    $themeBtn.addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme') || 'dark';
-        setTheme(current === 'dark' ? 'light' : 'dark');
-    });
-
-    // Init theme
-    const saved = localStorage.getItem('aero-theme');
-    if (saved) setTheme(saved);
-    else if (window.matchMedia('(prefers-color-scheme: light)').matches) setTheme('light');
-    else setTheme('dark');
 
     // Scroll to top
     let scrollTimer;
