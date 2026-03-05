@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <title>Aviation Database</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-green: #00ff88;
+            --faa-color: #0084ff;
+            --sofema-color: #ff9500;
+            --jeppesen-color: #af52de;
+            --notam-color: #ff375f;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding-top: var(--safe-top);
+            padding-bottom: calc(80px + var(--safe-bottom));
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text-primary);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .header-btn:active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(0.95);
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* Alphabet Index */
+        .alphabet-index {
+            position: fixed;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            z-index: 90;
+            padding: 10px 5px;
+        }
+
+        .alphabet-letter {
+            font-size: 11px;
+            color: var(--accent-green);
+            font-weight: 600;
+            cursor: pointer;
+            padding: 2px 5px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .alphabet-letter:active {
+            transform: scale(1.3);
+            color: var(--text-primary);
+        }
+
+        /* Content */
+        .content {
+            padding: 0 20px 20px 20px;
+        }
+
+        /* List Items */
+        .section-header {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            padding: 20px 0 10px 0;
+            position: sticky;
+            top: 85px;
+            background: var(--bg-primary);
+            z-index: 50;
+        }
+
+        .item {
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .item-content {
+            flex: 1;
+            padding-right: 15px;
+        }
+
+        .item-acronym {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin-bottom: 4px;
+        }
+
+        .item-definition {
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        .item-source {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-align: right;
+            white-space: nowrap;
+            padding-top: 2px;
+        }
+
+        .item-source.faa { color: var(--faa-color); }
+        .item-source.sofema { color: var(--sofema-color); }
+        .item-source.jeppesen { color: var(--jeppesen-color); }
+        .item-source.notam { color: var(--notam-color); }
+
+        /* Search Bar */
+        .search-container {
+            position: fixed;
+            bottom: calc(20px + var(--safe-bottom));
+            left: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: rgba(118, 118, 128, 0.24);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 10px 15px;
+            gap: 10px;
+        }
+
+        .search-icon {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .search-input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 16px;
+            outline: none;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .clear-btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: var(--text-primary);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .clear-btn.visible {
+            display: flex;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .empty-state-text {
+            font-size: 17px;
+            font-weight: 500;
+        }
+
+        /* Filter Pills */
+        .filter-container {
+            display: flex;
+            gap: 8px;
+            padding: 15px 20px 10px 20px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            position: sticky;
+            top: 85px;
+            background: var(--bg-primary);
+            z-index: 60;
+        }
+
+        .filter-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-pill {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-pill.active {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+            border-color: var(--accent-green);
+        }
+
+        .filter-pill:active {
+            transform: scale(0.95);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent-green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <button class="header-btn" id="backBtn" style="opacity: 0; pointer-events: none;">
+            ←
+        </button>
+        <div class="header-title">Abbreviations</div>
+        <button class="header-btn" id="settingsBtn">
+            ⚙️
+        </button>
+    </div>
+
+    <!-- Filter Pills -->
+    <div class="filter-container" id="filterContainer">
+        <div class="filter-pill active" data-source="all">All</div>
+        <div class="filter-pill" data-source="faa">FAA</div>
+        <div class="filter-pill" data-source="sofema">SOFEMA</div>
+        <div class="filter-pill" data-source="jeppesen">Jeppesen</div>
+        <div class="filter-pill" data-source="notam">NOTAM</div>
+    </div>
+
+    <!-- Alphabet Index -->
+    <div class="alphabet-index" id="alphabetIndex"></div>
+
+    <!-- Content -->
+    <div class="content" id="content">
+        <div class="loading">
+            <div class="spinner"></div>
+            <div>Loading database...</div>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container">
+        <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input 
+                type="text" 
+                class="search-input" 
+                id="searchInput" 
+                placeholder="Search..."
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+            >
+            <button class="clear-btn" id="clearBtn">×</button>
+        </div>
+    </div>
+
+    <script>
+        // Sample database - Replace with your actual Google Sheets data
+        let database = [];
+
+        // State
+        let currentFilter = 'all';
+        let searchQuery = '';
+
+        // Initialize
+        async function init() {
+            await loadDatabase();
+            setupEventListeners();
+            renderAlphabetIndex();
+            renderContent();
+        }
+
+        // Load database from Google Sheets
+        async function loadDatabase() {
+            const sheets = {
+                faa: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTTZQu_pDVoituFYYch_vc9mxKX2KBt4gzY7HHgYmz8x8KrAGDkh4s5KgIxtdVpq_ZuyG_sUNxaA-u0/pub?output=csv',
+                sofema: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQAxE1adAbm_uAC9rK1raBK0Fx9m-dhO8wU9yEb2FziL244tYoovtYSNkGVoLt_R1IXHk2KEC-_AjIb/pub?output=csv',
+                jeppesen: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRubNpKZskFJkEOA1_UhEbNUY12mYuhANXemM3CzVPH5tivDKDGEUzg_x-RmHURHMjKmLA0TE-FVUvz/pub?output=csv',
+                notam: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQdYQqsxvlVosMPZmMm8Wb1U6PnZTToHv1LPjtJlIbp3K-_vXpatwCvXtlH_YDrextjdgbNn9heA2gR/pub?output=csv'
+            };
+
+            // Load all databases
+            database = [];
+            const sources = ['faa', 'sofema', 'jeppesen', 'notam'];
+            
+            for (const sourceType of sources) {
+                try {
+                    const response = await fetch(sheets[sourceType]);
+                    const csvText = await response.text();
+                    const parsed = parseCSV(csvText, sourceType);
+                    database = database.concat(parsed);
+                } catch (error) {
+                    console.warn(`Failed to load ${sourceType}:`, error);
+                }
+            }
+
+            // Sort database alphabetically
+            database.sort((a, b) => a.acronym.localeCompare(b.acronym));
+        }
+
+        // Parse CSV data
+        function parseCSV(text, sourceType) {
+            const result = [];
+            const lines = text.split(/\r?\n/);
+            
+            // Start at i=1 to skip header row
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i];
+                if (!line.trim()) continue;
+                
+                const row = [];
+                let currentVal = '';
+                let inQuote = false;
+                
+                // Parse CSV handling quotes and commas
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    const nextChar = line[j + 1];
+                    
+                    if (char === '"') {
+                        if (inQuote && nextChar === '"') {
+                            currentVal += '"';
+                            j++;
+                        } else {
+                            inQuote = !inQuote;
+                        }
+                    } else if (char === ',' && !inQuote) {
+                        row.push(currentVal.trim());
+                        currentVal = '';
+                    } else {
+                        currentVal += char;
+                    }
+                }
+                row.push(currentVal.trim());
+                
+                // Map columns: acronym, meaning, category, image, context
+                if (row.length >= 2 && row[0] && row[1]) {
+                    const acronym = clean(row[0]);
+                    const meaning = clean(row[1]);
+                    
+                    if (acronym && meaning) {
+                        result.push({
+                            acronym: acronym,
+                            definition: meaning,
+                            source: sourceType.toUpperCase(),
+                            sourceType: sourceType
+                        });
+                    }
+                }
+            }
+            return result;
+        }
+
+        // Clean CSV values
+        function clean(str) {
+            if (!str) return '';
+            str = str.trim();
+            if (str.startsWith('"') && str.endsWith('"')) {
+                return str.slice(1, -1).trim();
+            }
+            return str;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Search input
+            const searchInput = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('clearBtn');
+
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value.toLowerCase();
+                clearBtn.classList.toggle('visible', searchQuery.length > 0);
+                renderContent();
+            });
+
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                searchQuery = '';
+                clearBtn.classList.remove('visible');
+                renderContent();
+                searchInput.focus();
+            });
+
+            // Filter pills
+            document.querySelectorAll('.filter-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    currentFilter = pill.dataset.source;
+                    renderContent();
+                });
+            });
+
+            // Settings button (placeholder)
+            document.getElementById('settingsBtn').addEventListener('click', () => {
+                alert('Settings coming soon!');
+            });
+        }
+
+        // Render alphabet index
+        function renderAlphabetIndex() {
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            const indexContainer = document.getElementById('alphabetIndex');
+            
+            alphabet.forEach(letter => {
+                const letterEl = document.createElement('div');
+                letterEl.className = 'alphabet-letter';
+                letterEl.textContent = letter;
+                letterEl.addEventListener('click', () => scrollToLetter(letter));
+                indexContainer.appendChild(letterEl);
+            });
+        }
+
+        // Scroll to letter section
+        function scrollToLetter(letter) {
+            const section = document.getElementById(`section-${letter}`);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Filter data
+        function getFilteredData() {
+            let filtered = database;
+
+            // Apply source filter
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(item => item.sourceType === currentFilter);
+            }
+
+            // Apply search filter
+            if (searchQuery) {
+                filtered = filtered.filter(item => 
+                    item.acronym.toLowerCase().includes(searchQuery) ||
+                    item.definition.toLowerCase().includes(searchQuery)
+                );
+            }
+
+            return filtered;
+        }
+
+        // Render content
+        function renderContent() {
+            const content = document.getElementById('content');
+            const filtered = getFilteredData();
+
+            if (filtered.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <div class="empty-state-text">No results found</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group by first letter
+            const grouped = {};
+            filtered.forEach(item => {
+                const firstLetter = item.acronym[0].toUpperCase();
+                if (!grouped[firstLetter]) {
+                    grouped[firstLetter] = [];
+                }
+                grouped[firstLetter].push(item);
+            });
+
+            // Render groups
+            let html = '';
+            Object.keys(grouped).sort().forEach(letter => {
+                html += `<div class="section-header" id="section-${letter}">${letter}</div>`;
+                grouped[letter].forEach(item => {
+                    html += `
+                        <div class="item">
+                            <div class="item-content">
+                                <div class="item-acronym">${item.acronym}</div>
+                                <div class="item-definition">${item.definition}</div>
+                            </div>
+                            <div class="item-source ${item.sourceType}">${item.source}</div>
+                        </div>
+                    `;
+                });
+            });
+
+            content.innerHTML = html;
+        }
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>
