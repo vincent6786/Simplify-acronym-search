@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0f1a">
+    <title>AeroSearch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0f1a;
+            --surface: #111827;
+            --surface-2: #1a2235;
+            --border: rgba(255,255,255,0.06);
+            --text: #e8edf5;
+            --text-dim: #7a8ba7;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.15);
+            --faa: #3b82f6;
+            --sofema: #f59e0b;
+            --jepp: #a855f7;
+            --notam: #ef4444;
+            --radius: 14px;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        [data-theme="light"] {
+            --bg: #f0f4f8;
+            --surface: #ffffff;
+            --surface-2: #e8eef4;
+            --border: rgba(0,0,0,0.07);
+            --text: #1a2435;
+            --text-dim: #6b7b91;
+            --accent: #0284c7;
+            --accent-glow: rgba(2, 132, 199, 0.1);
+        }
+
+        html { height: 100%; }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100%;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        /* ── AMBIENT BACKGROUND ── */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -40%; left: -20%;
+            width: 80%; height: 80%;
+            background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        /* ── MAIN CONTAINER ── */
+        .app {
+            position: relative;
+            z-index: 1;
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 0 16px;
+            padding-top: calc(16px + var(--safe-top));
+            padding-bottom: calc(100px + var(--safe-bottom));
+        }
+
+        /* ── HEADER ── */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--accent), #818cf8);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .logo-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.15rem;
+            letter-spacing: -0.5px;
+            color: var(--text);
+        }
+        .logo-text span { color: var(--accent); }
+
+        .theme-toggle {
+            width: 40px; height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface);
+            color: var(--text-dim);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .theme-toggle:active { transform: scale(0.92); }
+
+        /* ── SEARCH BAR ── */
+        .search-container {
+            position: sticky;
+            top: var(--safe-top);
+            z-index: 50;
+            padding: 8px 0 12px;
+            background: var(--bg);
+        }
+        .search-container::after {
+            content: '';
+            position: absolute;
+            bottom: -20px; left: -16px; right: -16px;
+            height: 20px;
+            background: linear-gradient(var(--bg), transparent);
+            pointer-events: none;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 16px;
+            padding: 4px;
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+        .search-bar:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow), 0 8px 30px rgba(0,0,0,0.15);
+        }
+
+        .search-icon {
+            padding: 0 14px;
+            color: var(--text-dim);
+            font-size: 16px;
+            display: flex; align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 12px 0;
+            outline: none;
+        }
+        .search-input::placeholder { color: var(--text-dim); font-weight: 400; }
+
+        .search-clear {
+            border: none;
+            background: none;
+            color: var(--text-dim);
+            font-size: 18px;
+            padding: 8px 12px;
+            cursor: pointer;
+            display: none;
+            line-height: 1;
+        }
+        .search-clear.visible { display: block; }
+
+        .search-mode {
+            margin: 0 4px;
+            padding: 8px 12px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-dim);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        /* ── DATABASE TABS ── */
+        .db-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 4px 0 16px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .db-tabs::-webkit-scrollbar { display: none; }
+
+        .db-tab {
+            flex-shrink: 0;
+            padding: 8px 16px;
+            border-radius: 100px;
+            border: 1.5px solid var(--border);
+            background: var(--surface);
+            color: var(--text-dim);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .db-tab:active { transform: scale(0.96); }
+
+        .db-tab .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .db-tab.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+        .db-tab.active .dot { background: white !important; }
+
+        .db-tab[data-db="all"].active { background: var(--accent); border-color: var(--accent); }
+        .db-tab[data-db="faa"] .dot { background: var(--faa); }
+        .db-tab[data-db="sofema"] .dot { background: var(--sofema); }
+        .db-tab[data-db="jepp"] .dot { background: var(--jepp); }
+        .db-tab[data-db="notam"] .dot { background: var(--notam); }
+
+        /* ── STATUS BAR ── */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2px 12px;
+            font-size: 12px;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .status-bar .count {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .sort-btn {
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-dim);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .sort-btn:active { transform: scale(0.96); }
+
+        /* ── RESULTS ── */
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+            animation: cardIn 0.35s ease both;
+            cursor: default;
+        }
+        .card:active {
+            transform: scale(0.985);
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .card-acronym {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--accent);
+            letter-spacing: -0.3px;
+            line-height: 1.2;
+            word-break: break-all;
+        }
+
+        .card-source {
+            flex-shrink: 0;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 6px;
+            color: white;
+        }
+        .card-source.FAA { background: var(--faa); }
+        .card-source.SOFEMA { background: var(--sofema); }
+        .card-source.JEPP { background: var(--jepp); }
+        .card-source.NOTAM { background: var(--notam); }
+
+        .card-meaning {
+            margin-top: 8px;
+            font-size: 0.95rem;
+            line-height: 1.55;
+            color: var(--text);
+            opacity: 0.88;
+        }
+
+        .card-category {
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 3px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .highlight {
+            background: var(--accent-glow);
+            color: var(--accent);
+            border-radius: 3px;
+            padding: 0 2px;
+        }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-dim);
+        }
+        .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+        .empty-state .title { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; color: var(--text); opacity: 0.6; }
+        .empty-state .sub { font-size: 0.85rem; opacity: 0.6; }
+
+        /* ── LOADING ── */
+        .loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px 0;
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 32px; height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loader-text {
+            font-size: 13px;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        /* ── SCROLL TOP ── */
+        .scroll-top {
+            position: fixed;
+            bottom: calc(24px + var(--safe-bottom));
+            right: 20px;
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px var(--accent-glow);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.25s;
+            z-index: 60;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .scroll-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .scroll-top:active { transform: scale(0.92); }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            bottom: calc(80px + var(--safe-bottom));
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--surface);
+            color: var(--text);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            border: 1px solid var(--border);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── SPLASH ── */
+        .splash {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+        .splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        .splash .spinner { width: 40px; height: 40px; }
+        .splash-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 380px) {
+            .db-tab { padding: 7px 12px; font-size: 12px; }
+            .card { padding: 14px 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SPLASH -->
+    <div class="splash" id="splash">
+        <div class="spinner"></div>
+        <div class="splash-label">Loading databases…</div>
+    </div>
+
+    <div class="app">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">✈</div>
+                <div class="logo-text">Aero<span>Search</span></div>
+            </div>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">☀</button>
+        </header>
+
+        <!-- SEARCH -->
+        <div class="search-container">
+            <div class="search-bar">
+                <div class="search-icon">⌕</div>
+                <input class="search-input" id="searchInput" type="text" placeholder="Search acronyms or definitions…" autocomplete="off" autocorrect="off" spellcheck="false">
+                <button class="search-clear" id="clearBtn" aria-label="Clear">×</button>
+                <select class="search-mode" id="searchMode" aria-label="Search mode">
+                    <option value="starts">Starts</option>
+                    <option value="contains">Contains</option>
+                    <option value="exact">Exact</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- DB TABS -->
+        <div class="db-tabs" id="dbTabs">
+            <button class="db-tab active" data-db="all">All</button>
+            <button class="db-tab" data-db="faa"><span class="dot"></span>FAA</button>
+            <button class="db-tab" data-db="sofema"><span class="dot"></span>SOFEMA</button>
+            <button class="db-tab" data-db="jepp"><span class="dot"></span>Jeppesen</button>
+            <button class="db-tab" data-db="notam"><span class="dot"></span>NOTAM</button>
+        </div>
+
+        <!-- STATUS -->
+        <div class="status-bar">
+            <span><span class="count" id="resultCount">0</span> results</span>
+            <button class="sort-btn" id="sortBtn">A→Z ↕</button>
+        </div>
+
+        <!-- RESULTS -->
+        <div class="results" id="results">
+            <div class="loader">
+                <div class="spinner"></div>
+                <div class="loader-text">Fetching data…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCROLL TOP -->
+    <button class="scroll-top" id="scrollTop" aria-label="Scroll to top">↑</button>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+<script>
+    /* ═══════════════════════════════════════
+       CONFIG
+       ═══════════════════════════════════════ */
+    const SOURCES = {
+        faa: {
+            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTTZQu_pDVoituFYYch_vc9mxKX2KBt4gzY7HHgYmz8x8KrAGDkh4s5KgIxtdVpq_ZuyG_sUNxaA-u0/pub?output=csv",
+            label: "FAA"
+        },
+        sofema: {
+            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAxE1adAbm_uAC9rK1raBK0Fx9m-dhO8wU9yEb2FziL244tYoovtYSNkGVoLt_R1IXHk2KEC-_AjIb/pub?output=csv",
+            label: "SOFEMA"
+        },
+        jepp: {
+            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRubNpKZskFJkEOA1_UhEbNUY12mYuhANXemM3CzVPH5tivDKDGEUzg_x-RmHURHMjKmLA0TE-FVUvz/pub?output=csv",
+            label: "JEPP"
+        },
+        notam: {
+            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQdYQqsxvlVosMPZmMm8Wb1U6PnZTToHv1LPjtJlIbp3K-_vXpatwCvXtlH_YDrextjdgbNn9heA2gR/pub?output=csv",
+            label: "NOTAM"
+        }
+    };
+
+    /* ═══════════════════════════════════════
+       STATE
+       ═══════════════════════════════════════ */
+    let allData = [];
+    let activeDB = 'all';
+    let sortOrder = 'default'; // default, az, za
+    const MAX_DISPLAY = 60;
+
+    /* ═══════════════════════════════════════
+       DOM
+       ═══════════════════════════════════════ */
+    const $input = document.getElementById('searchInput');
+    const $clear = document.getElementById('clearBtn');
+    const $mode = document.getElementById('searchMode');
+    const $results = document.getElementById('results');
+    const $count = document.getElementById('resultCount');
+    const $sortBtn = document.getElementById('sortBtn');
+    const $scrollTop = document.getElementById('scrollTop');
+    const $toast = document.getElementById('toast');
+    const $splash = document.getElementById('splash');
+
+    /* ═══════════════════════════════════════
+       CSV PARSER
+       ═══════════════════════════════════════ */
+    function parseCSV(text) {
+        const result = [];
+        const lines = text.split(/\r?\n/);
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i];
+            if (!line.trim()) continue;
+            const row = [];
+            let val = '', inQ = false;
+            for (let j = 0; j < line.length; j++) {
+                const c = line[j], n = line[j + 1];
+                if (c === '"') {
+                    if (inQ && n === '"') { val += '"'; j++; }
+                    else inQ = !inQ;
+                } else if (c === ',' && !inQ) {
+                    row.push(val.trim()); val = '';
+                } else val += c;
+            }
+            row.push(val.trim());
+            if (row.length >= 2) {
+                result.push({
+                    acronym: clean(row[0] || ''),
+                    meaning: clean(row[1] || ''),
+                    category: clean(row[2]) || 'General'
+                });
+            }
+        }
+        return result;
+    }
+
+    function clean(s) {
+        if (!s) return '';
+        if (s.startsWith('"') && s.endsWith('"')) return s.slice(1, -1).trim();
+        return s.trim();
+    }
+
+    /* ═══════════════════════════════════════
+       DATA LOADING
+       ═══════════════════════════════════════ */
+    function fetchSource(key) {
+        const src = SOURCES[key];
+        return fetch(src.url)
+            .then(r => r.text())
+            .then(t => parseCSV(t).map(item => ({ ...item, source: src.label })));
+    }
+
+    function loadAll() {
+        const keys = Object.keys(SOURCES);
+        Promise.allSettled(keys.map(k => fetchSource(k))).then(results => {
+            let loaded = [];
+            let failed = 0;
+            results.forEach(r => {
+                if (r.status === 'fulfilled') loaded = loaded.concat(r.value);
+                else failed++;
+            });
+            allData = loaded;
+            render();
+
+            // Hide splash
+            setTimeout(() => $splash.classList.add('hidden'), 400);
+
+            if (failed > 0 && loaded.length > 0) {
+                showToast(`${failed} source${failed > 1 ? 's' : ''} unavailable`);
+            } else if (loaded.length === 0) {
+                showToast('No data loaded — check connection');
+            }
+        });
+    }
+
+    /* ═══════════════════════════════════════
+       SEARCH + RENDER
+       ═══════════════════════════════════════ */
+    function render() {
+        const term = $input.value.trim().toLowerCase();
+        const mode = $mode.value;
+
+        let items = [...allData];
+
+        // Filter by DB
+        if (activeDB !== 'all') {
+            const label = SOURCES[activeDB].label;
+            items = items.filter(i => i.source === label);
+        }
+
+        // Filter by search
+        if (term) {
+            items = items.filter(i => {
+                const a = i.acronym.toLowerCase();
+                const m = i.meaning.toLowerCase();
+                if (mode === 'starts') return a.startsWith(term);
+                if (mode === 'exact') return a === term;
+                return a.includes(term) || m.includes(term);
+            });
+        }
+
+        // Sort
+        if (sortOrder === 'az') items.sort((a, b) => a.acronym.localeCompare(b.acronym));
+        else if (sortOrder === 'za') items.sort((a, b) => b.acronym.localeCompare(a.acronym));
+
+        $count.textContent = items.length;
+
+        // Render cards
+        if (items.length === 0) {
+            $results.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">⌕</div>
+                    <div class="title">No results found</div>
+                    <div class="sub">${term ? 'Try a different search term' : 'Select a database to browse'}</div>
+                </div>`;
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        const display = items.slice(0, MAX_DISPLAY);
+
+        display.forEach((item, idx) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.style.animationDelay = `${idx * 0.03}s`;
+
+            let meaningHTML = item.meaning;
+            if (term && (mode === 'contains')) {
+                const regex = new RegExp(`(${escapeRegex(term)})`, 'gi');
+                meaningHTML = meaningHTML.replace(regex, '<span class="highlight">$1</span>');
+            }
+
+            card.innerHTML = `
+                <div class="card-top">
+                    <span class="card-acronym">${item.acronym}</span>
+                    <span class="card-source ${item.source}">${item.source}</span>
+                </div>
+                <div class="card-meaning">${meaningHTML}</div>
+                ${item.category && item.category !== 'General' ? `<span class="card-category">${item.category}</span>` : ''}
+            `;
+            fragment.appendChild(card);
+        });
+
+        $results.innerHTML = '';
+        $results.appendChild(fragment);
+
+        if (items.length > MAX_DISPLAY) {
+            const more = document.createElement('div');
+            more.className = 'empty-state';
+            more.style.padding = '30px 20px';
+            more.innerHTML = `<div class="sub">Showing ${MAX_DISPLAY} of ${items.length} — refine your search</div>`;
+            $results.appendChild(more);
+        }
+    }
+
+    function escapeRegex(s) {
+        return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    /* ═══════════════════════════════════════
+       EVENT HANDLERS
+       ═══════════════════════════════════════ */
+
+    // Search input
+    let debounceTimer;
+    $input.addEventListener('input', () => {
+        $clear.classList.toggle('visible', $input.value.length > 0);
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(render, 150);
+    });
+
+    $clear.addEventListener('click', () => {
+        $input.value = '';
+        $clear.classList.remove('visible');
+        $input.focus();
+        render();
+    });
+
+    $mode.addEventListener('change', render);
+
+    // DB tabs
+    document.getElementById('dbTabs').addEventListener('click', (e) => {
+        const tab = e.target.closest('.db-tab');
+        if (!tab) return;
+        document.querySelectorAll('.db-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeDB = tab.dataset.db;
+        render();
+    });
+
+    // Sort
+    $sortBtn.addEventListener('click', () => {
+        if (sortOrder === 'default') { sortOrder = 'az'; $sortBtn.textContent = 'A→Z ✓'; }
+        else if (sortOrder === 'az') { sortOrder = 'za'; $sortBtn.textContent = 'Z→A ✓'; }
+        else { sortOrder = 'default'; $sortBtn.textContent = 'A→Z ↕'; }
+        render();
+    });
+
+    // Theme
+    const $themeBtn = document.getElementById('themeToggle');
+    function setTheme(t) {
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem('aero-theme', t);
+        $themeBtn.textContent = t === 'dark' ? '☀' : '☾';
+    }
+
+    $themeBtn.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        setTheme(current === 'dark' ? 'light' : 'dark');
+    });
+
+    // Init theme
+    const saved = localStorage.getItem('aero-theme');
+    if (saved) setTheme(saved);
+    else if (window.matchMedia('(prefers-color-scheme: light)').matches) setTheme('light');
+    else setTheme('dark');
+
+    // Scroll to top
+    let scrollTimer;
+    window.addEventListener('scroll', () => {
+        $scrollTop.classList.remove('visible');
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+            if (window.scrollY > 400) $scrollTop.classList.add('visible');
+        }, 400);
+    });
+    $scrollTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    // Toast
+    function showToast(msg) {
+        $toast.textContent = msg;
+        $toast.classList.add('show');
+        setTimeout(() => $toast.classList.remove('show'), 2800);
+    }
+
+    // Safety: force splash hide after 4s
+    setTimeout(() => $splash.classList.add('hidden'), 4000);
+
+    /* ═══════════════════════════════════════
+       INIT
+       ═══════════════════════════════════════ */
+    loadAll();
+</script>
+</body>
+</html>
