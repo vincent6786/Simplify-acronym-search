@@ -22,6 +22,7 @@
             --sofema: #f59e0b;
             --jepp: #a855f7;
             --notam: #ef4444;
+            --g1000: #10b981;
             --radius: 14px;
         }
 
@@ -121,62 +122,12 @@
         }
         .search-clear.visible { display: block; }
 
-        /* ── DATABASE TABS ── */
-        .db-tabs {
-            display: flex;
-            gap: 8px;
-            padding: 4px 0 16px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-        }
-        .db-tabs::-webkit-scrollbar { display: none; }
-
-        .db-tab {
-            flex-shrink: 0;
-            padding: 8px 16px;
-            border-radius: 100px;
-            border: 1.5px solid var(--border);
-            background: var(--surface);
-            color: var(--text-dim);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-        }
-        .db-tab:active { transform: scale(0.96); }
-
-        .db-tab .dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .db-tab.active {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: white;
-            box-shadow: 0 4px 16px var(--accent-glow);
-        }
-        .db-tab.active .dot { background: white !important; }
-
-        .db-tab[data-db="all"].active { background: var(--accent); border-color: var(--accent); }
-        .db-tab[data-db="faa"] .dot { background: var(--faa); }
-        .db-tab[data-db="sofema"] .dot { background: var(--sofema); }
-        .db-tab[data-db="jepp"] .dot { background: var(--jepp); }
-        .db-tab[data-db="notam"] .dot { background: var(--notam); }
-
         /* ── FILTER ROW ── */
         .filter-row {
             display: flex;
             gap: 8px;
             align-items: center;
-            padding: 0 0 12px;
+            padding: 0 0 8px;
             flex-wrap: wrap;
         }
 
@@ -270,6 +221,7 @@
         .card-source.SOFEMA { background: var(--sofema); }
         .card-source.JEPP { background: var(--jepp); }
         .card-source.NOTAM { background: var(--notam); }
+        .card-source.G1000 { background: var(--g1000); }
 
         .card-meaning {
             margin-top: 8px;
@@ -409,7 +361,6 @@
 
         /* ── RESPONSIVE ── */
         @media (max-width: 380px) {
-            .db-tab { padding: 7px 12px; font-size: 12px; }
             .card { padding: 14px 15px; }
         }
     </style>
@@ -433,24 +384,25 @@
             </div>
         </div>
 
-        <!-- DB TABS -->
-        <div class="db-tabs" id="dbTabs">
-            <button class="db-tab active" data-db="all">All</button>
-            <button class="db-tab" data-db="faa"><span class="dot"></span>FAA</button>
-            <button class="db-tab" data-db="sofema"><span class="dot"></span>SOFEMA</button>
-            <button class="db-tab" data-db="jepp"><span class="dot"></span>Jeppesen</button>
-            <button class="db-tab" data-db="notam"><span class="dot"></span>NOTAM</button>
-        </div>
-
         <!-- FILTERS -->
+        <div class="filter-row">
+            <select class="filter-select" id="dbSelect" aria-label="Database">
+                <option value="all">All Databases</option>
+                <option value="faa">FAA</option>
+                <option value="sofema">SOFEMA</option>
+                <option value="jepp">Jeppesen</option>
+                <option value="notam">NOTAM</option>
+                <option value="g1000">G1000</option>
+            </select>
+            <select class="filter-select" id="categoryFilter" aria-label="Category">
+                <option value="all">All Categories</option>
+            </select>
+        </div>
         <div class="filter-row">
             <select class="filter-select" id="searchMode" aria-label="Search mode">
                 <option value="starts">Starts with</option>
                 <option value="contains">Contains</option>
                 <option value="exact">Exact match</option>
-            </select>
-            <select class="filter-select" id="categoryFilter" aria-label="Category">
-                <option value="all">All Categories</option>
             </select>
             <select class="filter-select" id="sortSelect" aria-label="Sort">
                 <option value="default">Original</option>
@@ -497,6 +449,10 @@
         notam: {
             url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQdYQqsxvlVosMPZmMm8Wb1U6PnZTToHv1LPjtJlIbp3K-_vXpatwCvXtlH_YDrextjdgbNn9heA2gR/pub?output=csv",
             label: "NOTAM"
+        },
+        g1000: {
+            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSvvDiyd4kJ9BYpogwiNcJv9j9UE1zrCUZL7oJhXRDkFsEw_nR6AhKtoKXfwfRTZcMGCJw3ktz8qa14/pub?output=csv",
+            label: "G1000"
         }
     };
 
@@ -730,13 +686,10 @@
     $catFilter.addEventListener('change', render);
     $sortSelect.addEventListener('change', render);
 
-    // DB tabs
-    document.getElementById('dbTabs').addEventListener('click', (e) => {
-        const tab = e.target.closest('.db-tab');
-        if (!tab) return;
-        document.querySelectorAll('.db-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        activeDB = tab.dataset.db;
+    // DB select
+    const $dbSelect = document.getElementById('dbSelect');
+    $dbSelect.addEventListener('change', () => {
+        activeDB = $dbSelect.value;
         populateCategories();
         render();
     });
